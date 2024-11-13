@@ -1,0 +1,193 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1046{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\*\generator Riched20 10.0.22621}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qc\b\f0\fs24\lang22 Topicos Importantes\par
+
+\pard\sa200\sl276\slmult1 1 - Dele\'e7\'e3o em cascata no MySql\b0\fs22\par
+No codigo do script para cria\'e7\'e3o do bancos de dados, onde tem "delete cascade".\par
+-- Cria\'e7\'e3o da tabela `codigos_verificacao`\par
+CREATE TABLE IF NOT EXISTS codigos_verificacao (\par
+    id INT AUTO_INCREMENT PRIMARY KEY,\par
+    usuario_id INT NOT NULL,\par
+    codigo VARCHAR(6) NOT NULL,\par
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\par
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE\par
+);\par
+-- Cria\'e7\'e3o da tabela `codigos_redefinicao`\par
+CREATE TABLE IF NOT EXISTS codigos_redefinicao (\par
+    usuario_id INT PRIMARY KEY,\par
+    codigo VARCHAR(6),\par
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\par
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE\par
+\b\fs24 2 - Hasht de Senha\b0\fs22\par
+Utilizado no registro e da redefini\'e7\'e3o de senha.\par
+Parte do codigo do registro\par
+$stmt = $conexao->prepare("INSERT INTO usuarios (email, senha_hash) VALUES (?, ?)");\par
+    $stmt->bind_param("ss", $email, $senha);\par
+Parte do codigo da redefini\'e7\'e3o\par
+$stmtUpdate = $conexao->prepare("UPDATE usuarios SET senha_hash = ? WHERE id = ?");\par
+        $stmtUpdate->bind_param("si", $nova_senha, $usuario_id);\par
+        $stmtUpdate->execute();\par
+\b\fs24 3 - Sessions \par
+\b0\fs22 As se\'e7\'f5es ficam no servidor \par
+<?php\par
+session_start();\par
+// Verifica se o usu\'e1rio est\'e1 logado\par
+if (!isset($_SESSION['user_id'])) \{\par
+    header("Location: login.html");\par
+    exit();\par
+\}\par
+\b\fs24 4 - Cookies\b0\fs22\par
+Os cookies ficam no front end (para o ususario visualizar), no caso do exemplo est\'e1 como contador de acessos a aplica\'e7\'e3o.\par
+// Verifica o cookie de contador de visitas\par
+if (isset($_COOKIE['login_count'])) \{\par
+    $loginCount = $_COOKIE['login_count'] + 1; // Incrementa o contador\par
+\} else \{\par
+    $loginCount = 1; // Primeira visita\par
+\}\par
+// Atualiza o cookie com o novo valor e define validade de 30 dias\par
+setcookie('login_count', $loginCount, time() + (30 * 24 * 60 * 60), "/");\par
+\b\fs24 5 - Functions (PHP e JavaScript) \b0\fs22\par
+As fun\'e7\'f5es s\'e3o blocos de c\'f3digos que ajudam a organizar, reutilizar e facilitar a manuten\'e7\'e3o do c\'f3digo, podendo ser repetida ao longo do mesmo.\par
+function enviarCodigoEmail($destinatario, $codigo) \{\par
+    $mail = new PHPMailer(true);\par
+\b\fs24 6 - Include e Require \b0\fs22\par
+O include inclui um arquivo especificado, quando n\'e3o encontrado gera um erro warning e o script continua a ser executado.\par
+<?php\par
+session_start();\par
+include 'conexao.php';\par
+J\'e1 o require inclui um arquivo especificado, quando n\'e3o encontrado gera uma erro fatal e o script para de ser executado.\par
+require 'src/PHPMailer.php';\par
+require 'src/SMTP.php';\par
+require 'src/Exception.php';\par
+\b\fs24 7- Conex\'e3o mysqli \b0\fs22\par
+Conex\'e3o com o banco de dados atraves do codigo abaixo.\par
+<?php\par
+$host = 'localhost';\par
+$usuario = 'root';\par
+$senha = '';\par
+$banco = 'autenticacao';\par
+$porta = 7306;\par
+$conexao = new mysqli($host, $usuario, $senha, $banco, $porta);\par
+if ($conexao->connect_error) \{\par
+    die("Erro na conex\'e3o: " . $conexao->connect_error);\par
+\}\par
+?>\par
+\b\fs24 8 - Try...catch \b0\fs22\par
+Usada para tratar uma exe\'e7\'e3o, exemplo abaixo.\par
+try \{\par
+        $mail->isSMTP();\par
+        $mail->Host = 'smtp.gmail.com'; \par
+        $mail->SMTPAuth = true;\par
+      \tab\tab\par
+\tab\tab $mail->Username = 'julianalempk29@gmail.com'; //Preencher com e-mail para envio\par
+        $mail->Password = 'dizi qmyq sjta imia'; //Preencher a senha do app\par
+\tab\tab\par
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;\par
+        $mail->Port = 465;\par
+\tab\tab\par
+\tab\tab // Define o idioma e o charset\par
+        $mail->setLanguage('pt_br');\par
+        $mail->CharSet = 'UTF-8';\par
+\par
+        $mail->setFrom('julianalempk29@gmail.com', 'Sistema de Login'); //Preencher com e-mail para envio\par
+        $mail->addAddress($destinatario);\par
+\par
+        $mail->isHTML(true);\par
+        $mail->Subject = 'C\'f3digo de Verifica\'e7\'e3o';\par
+        $mail->Body = "Seu c\'f3digo de verifica\'e7\'e3o \'e9: <b>$codigo</b>";\par
+\par
+        $mail->send();\par
+        echo 'C\'f3digo enviado com sucesso!';\par
+    \} catch (Exception $e) \{\par
+        echo "Erro ao enviar c\'f3digo: \{$mail->ErrorInfo\}";\par
+    \}\par
+\}\par
+?>\par
+\b\fs24 9 - Estruturas if, elseif e else\b0\fs22\par
+if ($name !== null && is_string($name)) \{\par
+            $name = trim(preg_replace('/[\\r\\n]+/', '', $name)); //Strip breaks and trim\par
+        \} else \{\par
+            $name = '';\par
+        \}\par
+if (static::idnSupported() && $this->has8bitChars(substr($address, ++$pos))) \{\par
+            if ('Reply-To' !== $kind) \{\par
+                if (!array_key_exists($address, $this->RecipientsQueue)) \{\par
+                    $this->RecipientsQueue[$address] = $params;\par
+\par
+                    return true;\par
+                \}\par
+            \} elseif (!array_key_exists($address, $this->ReplyToQueue)) \{\par
+                $this->ReplyToQueue[$address] = $params;\par
+\par
+                return true;\par
+\b\fs24 10 - Refer\'eancias com ->\b0\fs22\par
+Referencia a objeto, no caso referencia a propriedades e metodos.\par
+$mail->isSMTP();\par
+        $mail->Host = 'smtp.gmail.com'; \par
+        $mail->SMTPAuth = true;\par
+\b\fs24 11 - Estruturas while\b0\fs22\par
+<?php while ($assunto = $assuntos_resultado->fetch_assoc()) : ?>\par
+                    <option value="<?php echo $assunto['assunto']; ?>" <?php echo ($assunto['assunto'] == $filtro_assunto) ? 'selected' : ''; ?>>\par
+                        <?php echo $assunto['assunto']; ?>\par
+                    </option>\par
+                <?php endwhile; ?>\par
+\b\fs24 12 - M\'e9todos POST \b0\fs22\par
+Envio de dados por HTML de forma mais segura.\par
+// Adicionar nova quest\'e3o\par
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar'])) \{\par
+    $assunto = $_['assunto'];\par
+    $enunciado = $_POST['enunciado'];\par
+    $alternativa1 = $_POST['alternativa1'];\par
+    $alternativa2 = $_POST['alternativa2'];\par
+    $alternativa3 = $_POST['alternativa3'];\par
+    $alternativa4 = $_POST['alternativa4'];\par
+    $alternativa5 = $_POST['alternativa5'];\par
+    $alternativa_correta = $_POST['alternativa_correta'];\par
+\b\fs24 13 - CRUD Completo \b0\fs22\par
+CRUD significa criar, editar, ler e excluir.\par
+CRIAR // Adicionar nova quest\'e3o\par
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adicionar'])) \{\par
+    $assunto = $_['assunto'];\par
+    $enunciado = $_POST['enunciado'];\par
+    $alternativa1 = $_POST['alternativa1'];\par
+    $alternativa2 = $_POST['alternativa2'];\par
+    $alternativa3 = $_POST['alternativa3'];\par
+    $alternativa4 = $_POST['alternativa4'];\par
+    $alternativa5 = $_POST['alternativa5'];\par
+    $alternativa_correta = $_POST['alternativa_correta'];\par
+// Editar quest\'e3o existente\par
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) \{\par
+    $id = $_POST['id'];\par
+    $assunto = $_POST['assunto'];\par
+    $enunciado = $_POST['enunciado'];\par
+    $alternativa1 = $_POST['alternativa1'];\par
+    $alternativa2 = $_POST['alternativa2'];\par
+    $alternativa3 = $_POST['alternativa3'];\par
+    $alternativa4 = $_POST['alternativa4'];\par
+    $alternativa5 = $_POST['alternativa5'];\par
+    $alternativa_correta = $_POST['alternativa_correta'];\par
+LER // Obter todas as quest\'f5es, aplicando filtro se necess\'e1rio\par
+$sql = "SELECT * FROM questoes";\par
+if ($filtro_assunto) \{\par
+    $sql .= " WHERE assunto = '$filtro_assunto'";\par
+\}\par
+$resultado = $conexao->query($sql);\par
+// Deletar quest\'e3o\par
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['deletar'])) \{\par
+    $id = $_POST['id'];\par
+    $conexao->query("DELETE FROM questoes WHERE id=$id");\par
+    header("Location: aplicacao.php");\par
+    exit();\par
+\}\par
+\b\fs24 14 - Finalidade da aplica\'e7\'e3o\b0\fs22\par
+A finalidade da aplica\'e7\'e3o e um banco de dados de quest\'f5es para professores/alunos, essa aplica\'e7\'e3o cont\'e9m cadastro de usuario com validade do e-mail e senha, redefini\'e7\'e3o de senha e atendendo a LGPD cotem a exclus\'e3o de conta.\par
+\b\fs24 15 - Autentica\'e7\'e3o em 2 etapas \par
+\b0\fs22 A autentica\'e7\'e3o em duas etapas e feita para ter uma forma maior de seguran\'e7a, podendo ser atenticada por SMS, Whatsapp, Codigo de verifica\'e7\'e3o e App. Essa aplica\'e7\'e3o utiliza a autentica\'e7\'e3o em duas etapas, como phpmiler.\par
+\b\fs24 Observa\'e7\'e3o:\par
+\b0\fs22 Um ponto de melhoria nessa aplica\'e7\'e3o e a for\'e7a de senha, n\'e3o deixar passar com senha fraca.\par
+\par
+\par
+\par
+\par
+}
+ 
